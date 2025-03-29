@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ createNote }) => {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h1 className="sidebar-title">Smart Notes</h1>
+        <h1 className="sidebar-title">Foundation</h1>
       </div>
       
       <nav className="sidebar-nav">
