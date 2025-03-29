@@ -107,7 +107,7 @@ function registerIpcHandlers() {
         content: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        tags: [],
+        tags: [] as string[],
         blocks: [{
           id: `block-${Date.now()}`,
           type: 'text',
