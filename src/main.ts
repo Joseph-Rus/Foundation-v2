@@ -14,18 +14,31 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+console.log('Main process starting...');
+
 // Path to store notes
 const userDataPath = app.getPath('userData');
 const notesDir = path.join(userDataPath, 'notes');
+console.log(`Notes directory: ${notesDir}`);
 
 // Ensure notes directory exists
 if (!fs.existsSync(notesDir)) {
+  console.log('Creating notes directory...');
   fs.mkdirSync(notesDir, { recursive: true });
 }
 
+let mainWindow: BrowserWindow | null = null;
+
+// Register IPC handlers immediately to ensure they're available
+// before the window is created
+registerIpcHandlers();
+
 const createWindow = (): void => {
+  console.log('Creating main window...');
+  console.log('Preload path:', MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY);
+  
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     height: 600,
     width: 800,
     webPreferences: {
@@ -36,19 +49,20 @@ const createWindow = (): void => {
   });
 
   // and load the index.html of the app.
+  console.log('Loading URL:', MAIN_WINDOW_WEBPACK_ENTRY);
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+  
+  console.log('Main window created successfully');
 };
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-  // Register IPC handlers
-  registerIpcHandlers();
-  
+  console.log('App ready event fired');
   createWindow();
 });
 
@@ -69,10 +83,19 @@ app.on('activate', () => {
   }
 });
 
+// Debug helper: List all registered IPC handlers
+function listRegisteredHandlers() {
+  const handlers = ipcMain.eventNames();
+  console.log('Registered IPC handlers:', handlers);
+}
+
 // Register IPC handlers for note operations
 function registerIpcHandlers() {
-  // Get all notes
+  console.log('Registering IPC handlers...');
+
+  // Get all notes (metadata only)
   ipcMain.handle('get-notes', async () => {
+    console.log('Handler: get-notes called');
     try {
       if (!fs.existsSync(notesDir)) {
         fs.mkdirSync(notesDir, { recursive: true });
@@ -83,20 +106,33 @@ function registerIpcHandlers() {
       const notes = [];
       
       for (const file of files) {
-        const content = fs.readFileSync(path.join(notesDir, file), 'utf-8');
-        const note = JSON.parse(content);
-        notes.push(note);
+        try {
+          const content = fs.readFileSync(path.join(notesDir, file), 'utf-8');
+          const note = JSON.parse(content);
+          notes.push({
+            id: note.id,
+            title: note.title,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
+            tags: note.tags || []
+          });
+        } catch (error) {
+          console.error(`Error reading note ${file}:`, error);
+        }
       }
       
+      console.log(`Returning ${notes.length} notes`);
       return notes;
     } catch (error) {
       console.error('Error getting notes:', error);
       return [];
     }
   });
-
+  
+  // All other handlers remain the same...
   // Create a new note
   ipcMain.handle('create-note', async () => {
+    console.log('Handler: create-note called');
     try {
       const id = Date.now().toString();
       const newNote = {
@@ -122,6 +158,7 @@ function registerIpcHandlers() {
         JSON.stringify(newNote, null, 2)
       );
       
+      console.log('Note created successfully with ID:', id);
       return id;
     } catch (error) {
       console.error('Error creating note:', error);
@@ -131,23 +168,67 @@ function registerIpcHandlers() {
 
   // Get a specific note by ID
   ipcMain.handle('get-note', async (_, id) => {
+    console.log(`Handler: get-note called for id: ${id}`);
     try {
       const filePath = path.join(notesDir, `${id}.json`);
       
       if (!fs.existsSync(filePath)) {
+        console.error(`Note file ${id}.json does not exist`);
         return null;
       }
       
       const content = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(content);
+      const note = JSON.parse(content);
+      console.log(`Loaded note ${id} successfully`);
+      return note;
     } catch (error) {
       console.error(`Error getting note ${id}:`, error);
       return null;
     }
   });
 
+  // Get settings
+  ipcMain.handle('get-settings', async () => {
+    console.log('Handler: get-settings called');
+    try {
+      const settingsPath = path.join(userDataPath, 'settings.json');
+      
+      if (!fs.existsSync(settingsPath)) {
+        console.log('Settings file does not exist, returning null');
+        return null;
+      }
+      
+      const content = fs.readFileSync(settingsPath, 'utf-8');
+      const settings = JSON.parse(content);
+      console.log('Settings loaded successfully');
+      return settings;
+    } catch (error) {
+      console.error('Error getting settings:', error);
+      return null;
+    }
+  });
+  
+  // Save settings
+  ipcMain.handle('save-settings', async (_, settings) => {
+    console.log('Handler: save-settings called');
+    try {
+      const settingsPath = path.join(userDataPath, 'settings.json');
+      fs.writeFileSync(
+        settingsPath,
+        JSON.stringify(settings, null, 2)
+      );
+      
+      console.log('Settings saved successfully');
+      return true;
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      return false;
+    }
+  });
+  
   // Save a note
   ipcMain.handle('save-note', async (_, note) => {
+    console.log(`Handler: save-note called for id: ${note?.id}`);
     try {
       const { id } = note;
       
@@ -167,59 +248,34 @@ function registerIpcHandlers() {
         JSON.stringify(note, null, 2)
       );
       
+      console.log(`Note ${id} saved successfully`);
       return note;
     } catch (error) {
       console.error('Error saving note:', error);
       throw error;
     }
   });
-
+  
   // Delete a note
   ipcMain.handle('delete-note', async (_, id) => {
+    console.log(`Handler: delete-note called for id: ${id}`);
     try {
       const filePath = path.join(notesDir, `${id}.json`);
       
       if (!fs.existsSync(filePath)) {
+        console.error(`Note file ${id}.json does not exist`);
         return false;
       }
       
       fs.unlinkSync(filePath);
+      console.log(`Note ${id} deleted successfully`);
       return true;
     } catch (error) {
       console.error(`Error deleting note ${id}:`, error);
       return false;
     }
   });
-
-  // Save settings
-  ipcMain.handle('save-settings', async (_, settings) => {
-    try {
-      fs.writeFileSync(
-        path.join(userDataPath, 'settings.json'),
-        JSON.stringify(settings, null, 2)
-      );
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      return false;
-    }
-  });
-
-  // Get settings
-  ipcMain.handle('get-settings', async () => {
-    try {
-      const settingsPath = path.join(userDataPath, 'settings.json');
-      
-      if (!fs.existsSync(settingsPath)) {
-        return null;
-      }
-      
-      const content = fs.readFileSync(settingsPath, 'utf-8');
-      return JSON.parse(content);
-    } catch (error) {
-      console.error('Error getting settings:', error);
-      return null;
-    }
-  });
+  
+  // List all registered handlers for debugging
+  listRegisteredHandlers();
 }
