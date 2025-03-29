@@ -1,125 +1,143 @@
-// src/components/Editor/CodeBlockEditor.tsx
-import React, { useState } from 'react';
+// src/components/Editor/LatexBlockEditor.tsx
+import React, { useState, useEffect } from 'react';
+import * as katex from 'katex';
+import 'katex/dist/katex.min.css';
 import { NoteBlock } from '../../types';
 
-interface CodeBlockEditorProps {
+interface LatexBlockEditorProps {
   block: NoteBlock;
   onChange: (block: NoteBlock) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
 }
 
-const CodeBlockEditor: React.FC<CodeBlockEditorProps> = ({ 
+const LatexBlockEditor: React.FC<LatexBlockEditorProps> = ({ 
   block, 
   onChange, 
   onKeyDown 
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(true);
-  const [language, setLanguage] = useState<string>(block.metadata?.language || 'javascript');
+  const [error, setError] = useState<string | null>(null);
+  const [renderedLatex, setRenderedLatex] = useState<string>('');
 
   // Handle content changes
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange({
       ...block,
       content: e.target.value,
-      metadata: {
-        ...block.metadata,
-        language,
-      },
     });
-  };
-
-  // Handle language selection
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLanguage = e.target.value;
-    setLanguage(newLanguage);
-    onChange({
-      ...block,
-      metadata: {
-        ...block.metadata,
-        language: newLanguage,
-      },
-    });
+    // Clear errors when content changes
+    setError(null);
   };
 
   // Toggle between edit and display mode
   const toggleEditMode = () => {
+    if (isEditing) {
+      // Attempt to render LaTeX before switching to display mode
+      renderLatex();
+    }
     setIsEditing(!isEditing);
   };
 
+  // Render LaTeX with KaTeX
+  const renderLatex = () => {
+    if (!block.content.trim()) {
+      setRenderedLatex('');
+      return;
+    }
+
+    try {
+      const html = katex.renderToString(block.content, {
+        displayMode: true,
+        throwOnError: false,
+        errorColor: '#e74c3c',
+        strict: 'ignore'
+      });
+      setRenderedLatex(html);
+      setError(null);
+    } catch (err) {
+      console.error('LaTeX rendering error:', err);
+      setError(err.message || 'Error rendering LaTeX');
+      setRenderedLatex('');
+    }
+  };
+
+  // Re-render LaTeX when content changes
+  useEffect(() => {
+    if (!isEditing) {
+      renderLatex();
+    }
+  }, [block.content, isEditing]);
+
   return (
-    <div className="code-block-editor">
+    <div className="latex-block-editor">
       {isEditing ? (
-        <div className="code-editor-input">
-          <div className="code-editor-header">
-            <select
-              className="language-selector"
-              value={language}
-              onChange={handleLanguageChange}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="typescript">TypeScript</option>
-              <option value="python">Python</option>
-              <option value="java">Java</option>
-              <option value="c">C</option>
-              <option value="cpp">C++</option>
-              <option value="csharp">C#</option>
-              <option value="go">Go</option>
-              <option value="rust">Rust</option>
-              <option value="ruby">Ruby</option>
-              <option value="php">PHP</option>
-              <option value="swift">Swift</option>
-              <option value="kotlin">Kotlin</option>
-              <option value="html">HTML</option>
-              <option value="css">CSS</option>
-              <option value="sql">SQL</option>
-              <option value="shell">Shell</option>
-              <option value="markdown">Markdown</option>
-              <option value="json">JSON</option>
-              <option value="xml">XML</option>
-              <option value="yaml">YAML</option>
-            </select>
-            
-            <button 
-              className="code-done-button"
-              onClick={toggleEditMode}
-            >
-              Done
-            </button>
+        <div className="latex-editor-input">
+          <div className="latex-editor-header">
+            <span className="latex-label">LaTeX</span>
+            <div className="latex-actions">
+              <button 
+                className="latex-preview-button"
+                onClick={renderLatex}
+                title="Preview"
+              >
+                Preview
+              </button>
+              <button 
+                className="latex-done-button"
+                onClick={toggleEditMode}
+              >
+                Done
+              </button>
+            </div>
           </div>
           
           <textarea
-            className="code-input"
+            className="latex-input"
             value={block.content}
             onChange={handleChange}
             onKeyDown={onKeyDown}
-            placeholder={`Enter ${language} code...`}
-            rows={5}
+            placeholder="Enter LaTeX expression... (e.g., E = mc^2)"
+            rows={3}
             data-block-id={block.id}
           />
+          
+          {error && <div className="latex-error">{error}</div>}
+          
+          {renderedLatex && (
+            <div className="latex-preview">
+              <div className="latex-preview-header">Preview:</div>
+              <div 
+                className="latex-preview-content"
+                dangerouslySetInnerHTML={{ __html: renderedLatex }}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div 
-          className="code-display"
+          className="latex-display"
           onClick={toggleEditMode}
           data-block-id={block.id}
         >
-          <div className="code-display-header">
-            <span className="code-language">{language}</span>
-            <button 
-              className="code-edit-button"
-              onClick={toggleEditMode}
-            >
-              Edit
-            </button>
-          </div>
+          {renderedLatex ? (
+            <div 
+              className="latex-display-content" 
+              dangerouslySetInnerHTML={{ __html: renderedLatex }}
+            />
+          ) : (
+            <div className="latex-empty">Empty LaTeX expression</div>
+          )}
           
-          <pre className={`language-${language}`}>
-            <code>{block.content || `// Empty ${language} block`}</code>
-          </pre>
+          <button 
+            className="latex-edit-button"
+            onClick={toggleEditMode}
+          >
+            Edit
+          </button>
         </div>
       )}
     </div>
   );
 };
 
-export default CodeBlockEditor;
+export default LatexBlockEditor;

@@ -29,67 +29,7 @@ if (!fs.existsSync(notesDir)) {
 
 let mainWindow: BrowserWindow | null = null;
 
-// Register IPC handlers immediately to ensure they're available
-// before the window is created
-registerIpcHandlers();
-
-const createWindow = (): void => {
-  console.log('Creating main window...');
-  console.log('Preload path:', MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY);
-  
-  // Create the browser window.
-  mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
-    webPreferences: {
-      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  // and load the index.html of the app.
-  console.log('Loading URL:', MAIN_WINDOW_WEBPACK_ENTRY);
-  mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
-  
-  console.log('Main window created successfully');
-};
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  console.log('App ready event fired');
-  createWindow();
-});
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
-});
-
-// Debug helper: List all registered IPC handlers
-function listRegisteredHandlers() {
-  const handlers = ipcMain.eventNames();
-  console.log('Registered IPC handlers:', handlers);
-}
-
-// Register IPC handlers for note operations
+// Register IPC handlers
 function registerIpcHandlers() {
   console.log('Registering IPC handlers...');
 
@@ -129,7 +69,6 @@ function registerIpcHandlers() {
     }
   });
   
-  // All other handlers remain the same...
   // Create a new note
   ipcMain.handle('create-note', async () => {
     console.log('Handler: create-note called');
@@ -275,7 +214,102 @@ function registerIpcHandlers() {
       return false;
     }
   });
+
+  // Export a note (simple JSON export)
+  ipcMain.handle('export-note', async (_, id) => {
+    console.log(`Handler: export-note called for id: ${id}`);
+    try {
+      const filePath = path.join(notesDir, `${id}.json`);
+      
+      if (!fs.existsSync(filePath)) {
+        console.error(`Note file ${id}.json does not exist`);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Error exporting note ${id}:`, error);
+      return false;
+    }
+  });
+
+  // Simple LaTeX renderer (placeholder)
+  ipcMain.handle('render-latex', async (_, latex) => {
+    console.log(`Handler: render-latex called with: ${latex.substring(0, 20)}...`);
+    return latex; // Just return the input, rendering happens client-side
+  });
+
+  // Execute command (placeholder)
+  ipcMain.handle('execute-command', async (_, command, params) => {
+    console.log(`Handler: execute-command called with: ${command}, ${params}`);
+    try {
+      // Simple placeholder implementation
+      return {
+        success: true,
+        content: `Command ${command} executed with params: ${params}`,
+      };
+    } catch (error) {
+      console.error(`Error executing command ${command}:`, error);
+      return {
+        success: false,
+        error: error.message || 'Unknown error',
+      };
+    }
+  });
   
-  // List all registered handlers for debugging
-  listRegisteredHandlers();
+  // Log the registered handlers for your information
+  console.log('Registered IPC handlers:', ipcMain.eventNames());
 }
+
+// IMPORTANT: Register IPC handlers before app is ready
+registerIpcHandlers();
+
+const createWindow = (): void => {
+  console.log('Creating main window...');
+  console.log('Preload path:', MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY);
+  
+  // Create the browser window.
+  mainWindow = new BrowserWindow({
+    height: 600,
+    width: 800,
+    webPreferences: {
+      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  // and load the index.html of the app.
+  console.log('Loading URL:', MAIN_WINDOW_WEBPACK_ENTRY);
+  mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+
+  // Open the DevTools.
+  mainWindow.webContents.openDevTools();
+  
+  console.log('Main window created successfully');
+};
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.on('ready', () => {
+  console.log('App ready event fired');
+  createWindow();
+});
+
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});

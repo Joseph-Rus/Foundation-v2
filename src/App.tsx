@@ -26,8 +26,6 @@ const defaultSettings: AppSettings = {
   autoSaveInterval: 30000, // 30 seconds
 };
 
-// Window interface is defined in types.ts
-
 const App: React.FC = () => {
   const [notes, setNotes] = useState<NoteMetadata[]>([]);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
@@ -64,7 +62,8 @@ const App: React.FC = () => {
           }
         } catch (settingsError) {
           console.error('Error loading settings:', settingsError);
-          setError(`Settings error: ${settingsError.message || 'Unknown error'}`);
+          // Fallback to default settings instead of showing an error
+          console.log('Using default settings instead');
         }
         
         // Load notes
@@ -72,7 +71,7 @@ const App: React.FC = () => {
         try {
           const notes = await window.electronAPI.getNotes();
           console.log('Notes loaded:', notes);
-          setNotes(notes);
+          setNotes(notes || []);
         } catch (notesError) {
           console.error('Error loading notes:', notesError);
           setError(`Notes error: ${notesError.message || 'Unknown error'}`);
@@ -90,8 +89,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Rest of your component remains the same
-
   // Create a new note
   const createNote = async () => {
     try {
@@ -100,7 +97,7 @@ const App: React.FC = () => {
       if (noteId) {
         // Refresh notes list
         const updatedNotes = await window.electronAPI.getNotes();
-        setNotes(updatedNotes);
+        setNotes(updatedNotes || []);
       }
       
       return noteId;
@@ -131,7 +128,7 @@ const App: React.FC = () => {
       
       // Update notes list
       const updatedNotes = await window.electronAPI.getNotes();
-      setNotes(updatedNotes);
+      setNotes(updatedNotes || []);
       
       return savedNote;
     } catch (error) {
@@ -149,7 +146,7 @@ const App: React.FC = () => {
       if (success) {
         // Update notes list
         const updatedNotes = await window.electronAPI.getNotes();
-        setNotes(updatedNotes);
+        setNotes(updatedNotes || []);
       }
       
       return success;
@@ -165,9 +162,11 @@ const App: React.FC = () => {
     try {
       await window.electronAPI.saveSettings(newSettings);
       setSettings(newSettings);
+      return true;
     } catch (error) {
       console.error('Error updating settings:', error);
       setError(`Failed to update settings: ${error.message || 'Unknown error'}`);
+      return false;
     }
   };
 
@@ -178,6 +177,16 @@ const App: React.FC = () => {
         <h1>Error</h1>
         <p>{error}</p>
         <button onClick={() => setError(null)}>Dismiss</button>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <h2>Loading application...</h2>
+        <div className="loading-spinner"></div>
       </div>
     );
   }

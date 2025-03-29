@@ -5,41 +5,45 @@ import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
-console.log('🚀 Renderer process starting...');
-console.log('📌 Checking electronAPI availability:', typeof window.electronAPI);
+console.log('Renderer process starting...');
 
-// Log available electronAPI methods for debugging
-if (window.electronAPI) {
-  console.log('📋 Available electronAPI methods:', Object.keys(window.electronAPI));
-} else {
-  console.error('❌ ERROR: electronAPI is not available! Check preload script setup.');
-}
+// Function to initialize React app
+const initializeReactApp = () => {
+  console.log('Checking electronAPI availability:', typeof window.electronAPI);
 
-// Create a container for React
-const container = document.getElementById('root');
+  // Create a container for React
+  const container = document.getElementById('root');
 
-if (!container) {
-  console.error('❌ ERROR: Root element not found! Check your HTML file.');
-} else {
-  console.log('✅ Root element found, initializing React app...');
+  if (!container) {
+    console.error('Root element not found! Check your HTML file.');
+    return;
+  }
+  
+  console.log('Root element found, initializing React app...');
   
   try {
     const root = createRoot(container);
     
-    // Wrap with error boundary for better debugging
-    window.addEventListener('error', (event) => {
-      console.error('🔥 Uncaught error:', event.error);
-    });
-    
     // Render the React app
     root.render(
-      <HashRouter>
-        <App />
-      </HashRouter>
+      React.createElement(HashRouter, null, 
+        React.createElement(App, null)
+      )
     );
     
-    console.log('✅ React app rendered successfully');
+    console.log('React app rendered successfully');
   } catch (error) {
-    console.error('❌ ERROR: Failed to render React app:', error);
+    console.error('Failed to render React app:', error);
   }
-}
+};
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM content loaded, initializing app...');
+  initializeReactApp();
+});
+
+// Set up global error handler
+window.addEventListener('error', (event) => {
+  console.error('Uncaught error:', event.error);
+});

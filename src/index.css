@@ -675,3 +675,124 @@ code {
     width: 90%;
   }
 }
+
+/* LaTeX Block Editor Styles - Add to your index.css file */
+
+.latex-block-editor {
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.latex-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.latex-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.latex-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.latex-preview-button, 
+.latex-done-button,
+.latex-edit-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.latex-preview-button:hover, 
+.latex-done-button:hover,
+.latex-edit-button:hover {
+  background-color: var(--secondary-color);
+}
+
+.latex-input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  resize: vertical;
+  font-family: monospace;
+  min-height: 80px;
+  background-color: white;
+  color: #333;
+}
+
+.latex-error {
+  color: #e74c3c;
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: #ffeaea;
+  border-top: 1px solid #ffcaca;
+}
+
+.latex-preview {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  background-color: #f8f9fa;
+}
+
+.latex-preview-header {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.latex-preview-content {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.latex-display {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.latex-display-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 15px;
+}
+
+.latex-empty {
+  color: #aaa;
+  font-style: italic;
+  padding: 15px;
+}
+
+.latex-edit-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.latex-display:hover .latex-edit-button {
+  opacity: 1;
+}
