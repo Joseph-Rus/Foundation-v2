@@ -22,6 +22,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const blockRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   // Handle keyboard events (Enter and Backspace)
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -35,6 +36,18 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
     if (e.key === 'Backspace' && !block.content.trim()) {
       e.preventDefault();
       onDeleteBlock(block.id);
+    }
+  };
+
+  // Fix for hover state management
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    // Check if mouse is moving to the action buttons
+    if (actionsRef.current && !actionsRef.current.contains(e.relatedTarget as Node)) {
+      setIsHovered(false);
     }
   };
 
@@ -67,13 +80,17 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
       className={`block-editor ${isHovered ? 'hovered' : ''}`}
       data-block-id={block.id}
       ref={blockRef}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {renderBlockEditor()}
       
       {isHovered && (
-        <div className="block-actions">
+        <div 
+          className="block-actions"
+          ref={actionsRef}
+          onMouseEnter={handleMouseEnter} // Keep hover state when mouse is over buttons
+        >
           <button 
             className="block-action-button"
             onClick={() => onAddBlockAfter(block.id, 'text')}

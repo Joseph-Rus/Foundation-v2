@@ -270,12 +270,13 @@ body {
   gap: 10px;
 }
 
-/* Block editor */
+/* Block editor - UPDATED FOR FIX */
 .block-editor {
   position: relative;
   border-radius: 5px;
   transition: background-color 0.2s;
   min-height: 40px;
+  padding-left: 40px; /* Add space for the action buttons */
 }
 
 .block-editor:hover {
@@ -289,6 +290,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  z-index: 10; /* Ensure buttons stay above other content */
 }
 
 .block-action-button {
@@ -312,6 +314,13 @@ body {
   border-color: var(--primary-color);
 }
 
+/* Dark mode support for block actions */
+[data-theme="dark"] .block-action-button {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  border-color: var(--border-color);
+}
+
 /* Text block */
 .text-block-editor {
   width: 100%;
@@ -331,48 +340,119 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 5px;
   overflow: hidden;
+  margin-bottom: 10px;
 }
 
-.latex-editor-input {
-  padding: 10px;
+.latex-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.latex-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.latex-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.latex-preview-button, 
+.latex-done-button,
+.latex-edit-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.latex-preview-button:hover, 
+.latex-done-button:hover,
+.latex-edit-button:hover {
+  background-color: var(--secondary-color);
 }
 
 .latex-input {
   width: 100%;
   padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
+  border: none;
   resize: vertical;
   font-family: monospace;
-  min-height: 60px;
+  min-height: 80px;
+  background-color: white;
+  color: #333;
 }
 
 .latex-error {
-  color: var(--error-color);
+  color: #e74c3c;
+  padding: 8px 12px;
   font-size: 14px;
-  margin-top: 5px;
+  background-color: #ffeaea;
+  border-top: 1px solid #ffcaca;
 }
 
-.latex-done-button {
-  margin-top: 10px;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
+.latex-preview {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  background-color: #f8f9fa;
+}
+
+.latex-preview-header {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.latex-preview-content {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #eee;
+  border-radius: 4px;
 }
 
 .latex-display {
-  padding: 15px;
+  padding: 16px;
   display: flex;
-  justify-content: center;
-  min-height: 60px;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
 }
 
-.empty-latex {
+.latex-display-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 15px;
+}
+
+.latex-empty {
   color: #aaa;
   font-style: italic;
+  padding: 15px;
+}
+
+.latex-edit-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.latex-display:hover .latex-edit-button {
+  opacity: 1;
 }
 
 /* Code block */
@@ -441,7 +521,7 @@ code {
   font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', monospace;
 }
 
-/* Command palette */
+/* Command palette - UPDATED FOR FIX */
 .command-palette {
   position: fixed;
   top: 20%;
@@ -479,7 +559,7 @@ code {
   transition: background-color 0.2s;
 }
 
-.command-suggestion:hover {
+.command-suggestion:hover, .command-suggestion.selected {
   background-color: var(--block-hover-bg);
 }
 
@@ -487,6 +567,12 @@ code {
   font-size: 12px;
   color: #888;
   margin-top: 5px;
+}
+
+.command-no-results {
+  padding: 20px;
+  text-align: center;
+  color: #888;
 }
 
 .command-palette-footer {
@@ -505,6 +591,11 @@ code {
   cursor: pointer;
 }
 
+.command-submit-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
 .command-cancel-button {
   background-color: transparent;
   color: var(--text-color);
@@ -513,6 +604,22 @@ code {
   padding: 8px 16px;
   margin-right: 10px;
   cursor: pointer;
+}
+
+/* Dark mode support for command palette */
+[data-theme="dark"] .command-palette {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .command-input {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .command-suggestion:hover, 
+[data-theme="dark"] .command-suggestion.selected {
+  background-color: var(--block-hover-bg);
 }
 
 /* Timeline */
@@ -664,6 +771,10 @@ code {
     padding: 10px;
   }
   
+  .block-editor {
+    padding-left: 0; /* Remove padding on mobile */
+  }
+  
   .block-actions {
     position: static;
     flex-direction: row;
@@ -674,125 +785,4 @@ code {
   .command-palette {
     width: 90%;
   }
-}
-
-/* LaTeX Block Editor Styles - Add to your index.css file */
-
-.latex-block-editor {
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.latex-editor-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.latex-label {
-  font-weight: 500;
-  color: #555;
-}
-
-.latex-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.latex-preview-button, 
-.latex-done-button,
-.latex-edit-button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.latex-preview-button:hover, 
-.latex-done-button:hover,
-.latex-edit-button:hover {
-  background-color: var(--secondary-color);
-}
-
-.latex-input {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  resize: vertical;
-  font-family: monospace;
-  min-height: 80px;
-  background-color: white;
-  color: #333;
-}
-
-.latex-error {
-  color: #e74c3c;
-  padding: 8px 12px;
-  font-size: 14px;
-  background-color: #ffeaea;
-  border-top: 1px solid #ffcaca;
-}
-
-.latex-preview {
-  padding: 12px;
-  border-top: 1px solid var(--border-color);
-  background-color: #f8f9fa;
-}
-
-.latex-preview-header {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #555;
-}
-
-.latex-preview-content {
-  display: flex;
-  justify-content: center;
-  padding: 10px;
-  background-color: white;
-  border: 1px solid #eee;
-  border-radius: 4px;
-}
-
-.latex-display {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
-.latex-display-content {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 15px;
-}
-
-.latex-empty {
-  color: #aaa;
-  font-style: italic;
-  padding: 15px;
-}
-
-.latex-edit-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.latex-display:hover .latex-edit-button {
-  opacity: 1;
 }

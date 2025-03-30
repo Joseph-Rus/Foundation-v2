@@ -1,5 +1,5 @@
 // src/components/commandPalette.tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface CommandPaletteProps {
   input: string;
@@ -15,26 +15,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
   onClose,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedCommand, setSelectedCommand] = useState<number>(0);
   
-  // Focus the input field when the component mounts
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-  
-  // Handle Enter key press for submission
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      onSubmit();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    }
-  };
-
-  // Examples of commands
+  // Command examples with detailed information
   const commandExamples = [
     { 
       command: '/insert', 
@@ -47,11 +30,66 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
       example: '/latex E=mc^2'
     },
     { 
+      command: '/code', 
+      description: 'Insert a code block with syntax highlighting',
+      example: '/code python:def hello_world():'
+    },
+    { 
       command: '/summarize', 
       description: 'Summarize selected text',
-      example: '/summarize'
+      example: '/summarize This is a long text that needs summarizing'
     }
   ];
+  
+  // Focus the input field when the component mounts
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+  
+  // Handle keyboard navigation and command selection
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (input === '' && commandExamples[selectedCommand]) {
+        // If input is empty and a command is selected, fill in the command
+        const selectedCmd = commandExamples[selectedCommand].command;
+        onInputChange({ target: { value: selectedCmd + ' ' } } as React.ChangeEvent<HTMLInputElement>);
+      } else {
+        // Otherwise, submit the command
+        onSubmit();
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onClose();
+    } else if (e.key === 'ArrowDown' && input === '') {
+      e.preventDefault();
+      setSelectedCommand((prev) => 
+        (prev + 1) % commandExamples.length
+      );
+    } else if (e.key === 'ArrowUp' && input === '') {
+      e.preventDefault();
+      setSelectedCommand((prev) => 
+        (prev - 1 + commandExamples.length) % commandExamples.length
+      );
+    }
+  };
+
+  const handleCommandClick = (cmd: string) => {
+    onInputChange({ target: { value: cmd + ' ' } } as React.ChangeEvent<HTMLInputElement>);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+  
+  // Filter commands based on input
+  const filteredCommands = input 
+    ? commandExamples.filter(cmd => 
+        cmd.command.toLowerCase().includes(input.toLowerCase()) ||
+        cmd.description.toLowerCase().includes(input.toLowerCase())
+      )
+    : commandExamples;
   
   return (
     <div className="command-palette">
@@ -63,20 +101,28 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
           value={input}
           onChange={onInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Type a command (e.g., /insert, /latex, /summarize)"
+          placeholder="Type a command (e.g., /insert, /latex, /code)"
         />
       </div>
       
-      {input === '' && (
-        <div className="command-palette-suggestions">
-          {commandExamples.map((example, index) => (
-            <div key={index} className="command-suggestion">
-              <div><strong>{example.command}</strong> - {example.description}</div>
-              <div className="command-example">Example: {example.example}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="command-palette-suggestions">
+        {filteredCommands.map((example, index) => (
+          <div 
+            key={index} 
+            className={`command-suggestion ${selectedCommand === index ? 'selected' : ''}`}
+            onClick={() => handleCommandClick(example.command)}
+          >
+            <div><strong>{example.command}</strong> - {example.description}</div>
+            <div className="command-example">Example: {example.example}</div>
+          </div>
+        ))}
+        
+        {filteredCommands.length === 0 && (
+          <div className="command-no-results">
+No matching commands found.
+          </div>
+        )}
+      </div>
       
       <div className="command-palette-footer">
         <button className="command-cancel-button" onClick={onClose}>

@@ -63,6 +63,7 @@ export interface CommandResult {
   success: boolean;
   content?: string;
   error?: string;
+  metadata?: Record<string, any>; // Add this line to include metadata
 }
 
 // Vector DB types

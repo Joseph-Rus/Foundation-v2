@@ -149,88 +149,97 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, saveNote, settings }) => 
     };
   }, [handleKeyDown]);
 
-  // Handle command execution
-  const executeCommand = async (commandType: string, params: string): Promise<CommandResult> => {
-    try {
-      // Check if executeCommand is available
-      if (!window.electronAPI || !window.electronAPI.executeCommand) {
-        console.error('executeCommand not available in electronAPI');
-        return {
-          success: false,
-          error: 'executeCommand not available',
-        };
-      }
-      
-      const result = await window.electronAPI.executeCommand(commandType, params);
-      
-      // Handle command result
-      if (result.success && result.content && localNote) {
-        // Find the current active block or use the last one
-        const activeElement = document.activeElement;
-        const activeBlockId = activeElement?.getAttribute('data-block-id') || 
-                              localNote.blocks[localNote.blocks.length - 1].id;
-        
-        // Find the block index
-        const blockIndex = localNote.blocks.findIndex(block => block.id === activeBlockId);
-        
-        if (blockIndex !== -1) {
-          // Determine block type based on command
-          let blockType: 'text' | 'latex' | 'code' = 'text';
-          
-          if (commandType === '/latex') {
-            blockType = 'latex';
-          } else if (commandType === '/code') {
-            blockType = 'code';
-          }
-          
-          // Create a new block with the content
-          const newBlock: NoteBlock = {
-            id: Date.now().toString(),
-            type: blockType,
-            content: result.content,
-          };
-          
-          // Insert the new block after the active block
-          const updatedBlocks = [...localNote.blocks];
-          updatedBlocks.splice(blockIndex + 1, 0, newBlock);
-          
-          setLocalNote({
-            ...localNote,
-            blocks: updatedBlocks,
-          });
-          setIsEditing(true);
-        }
-      }
-      
-      return result;
-    } catch (error: any) {
-      console.error('Error executing command:', error);
+// Handle command execution
+const executeCommand = async (commandType: string, params: string): Promise<CommandResult> => {
+  try {
+    // Check if executeCommand is available
+    if (!window.electronAPI || !window.electronAPI.executeCommand) {
+      console.error('executeCommand not available in electronAPI');
       return {
         success: false,
-        error: error.message || 'Unknown error',
+        error: 'executeCommand not available',
       };
     }
-  };
+    
+    console.log(`Executing command: ${commandType} with params: ${params}`);
+    const result = await window.electronAPI.executeCommand(commandType, params);
+    console.log('Command result:', result);
+    
+    // Handle command result
+    if (result.success && result.content && localNote) {
+      // Find the current active block or use the last one
+      const activeElement = document.activeElement;
+      const activeBlockId = activeElement?.getAttribute('data-block-id') || 
+                            localNote.blocks[localNote.blocks.length - 1].id;
+      
+      // Find the block index
+      const blockIndex = localNote.blocks.findIndex(block => block.id === activeBlockId);
+      
+      if (blockIndex !== -1) {
+        // Determine block type based on command
+        let blockType: 'text' | 'latex' | 'code' = 'text';
+        let metadata = result.metadata || {};
+        
+        if (commandType === '/latex') {
+          blockType = 'latex';
+        } else if (commandType === '/code') {
+          blockType = 'code';
+          if (!metadata.language) {
+            metadata.language = 'javascript'; // Default language
+          }
+        }
+        
+        // Create a new block with the content
+        const newBlock: NoteBlock = {
+          id: Date.now().toString(),
+          type: blockType,
+          content: result.content,
+          metadata
+        };
+        
+        // Insert the new block after the active block
+        const updatedBlocks = [...localNote.blocks];
+        updatedBlocks.splice(blockIndex + 1, 0, newBlock);
+        
+        setLocalNote({
+          ...localNote,
+          blocks: updatedBlocks,
+        });
+        setIsEditing(true);
+      }
+    }
+    
+    return result;
+  } catch (error: any) {
+    console.error('Error executing command:', error);
+    return {
+      success: false,
+      error: error.message || 'Unknown error',
+    };
+  }
+};
+
 
   // Handle command input change
   const handleCommandInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCommandInput(e.target.value);
   };
 
-  // Handle command submission
-  const handleCommandSubmit = async () => {
-    // Extract command type and parameters
-    const match = commandInput.match(/^\/(\w+)\s+(.*)/);
-    
-    if (match) {
-      const [, command, params] = match;
-      await executeCommand(`/${command}`, params);
-    }
-    
-    // Close command palette and reset input
-    setShowCommandPalette(false);
-    setCommandInput('');
-  };
+// Handle command submission
+const handleCommandSubmit = async () => {
+  // Extract command type and parameters
+  const commandMatch = commandInput.match(/^(\/\w+)(?:\s+(.*))?$/);
+  
+  if (commandMatch) {
+    const [, command, params = ''] = commandMatch;
+    console.log(`Submitting command: ${command}, params: ${params}`);
+    await executeCommand(command, params);
+  }
+  
+  // Close command palette and reset input
+  setShowCommandPalette(false);
+  setCommandInput('');
+};
 
   // If no note is loaded, show a loading state
   if (!localNote) {
