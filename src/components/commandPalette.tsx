@@ -23,22 +23,29 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     { 
       command: '/insert', 
       description: 'Use AI to insert content based on a prompt',
-      example: '/insert quadratic equation'
+      examples: [
+        '/insert quadratic equation',
+        '/insert write a poem about nature',
+        '/insert explain binary search'
+      ]
     },
     { 
       command: '/latex', 
       description: 'Insert a LaTeX mathematical expression',
-      example: '/latex E=mc^2'
+      examples: [
+        '/latex quadratic equation',
+        '/latex integral',
+        '/latex e^{i\\pi} + 1 = 0'
+      ]
     },
     { 
       command: '/code', 
       description: 'Insert a code block with syntax highlighting',
-      example: '/code python:def hello_world():'
-    },
-    { 
-      command: '/summarize', 
-      description: 'Summarize selected text',
-      example: '/summarize This is a long text that needs summarizing'
+      examples: [
+        '/code javascript:function hello() { return "world"; }',
+        '/code python:def fibonacci(n):',
+        '/code html:<div class="container"></div>'
+      ]
     }
   ];
   
@@ -87,6 +94,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
       setSelectedCommand((prev) => 
         (prev - 1 + filteredCommands.length) % filteredCommands.length
       );
+    } else if (e.key === 'Tab' && filteredCommands.length > 0) {
+      e.preventDefault();
+      // Fill in the selected command
+      const selectedCmd = filteredCommands[selectedCommand].command;
+      onInputChange({ target: { value: selectedCmd + ' ' } } as React.ChangeEvent<HTMLInputElement>);
     }
   };
 
@@ -96,12 +108,20 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
       inputRef.current.focus();
     }
   };
+
+  const handleExampleClick = (example: string) => {
+    onInputChange({ target: { value: example } } as React.ChangeEvent<HTMLInputElement>);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
   
   // Filter commands based on input
   const filteredCommands = input 
     ? commandExamples.filter(cmd => 
         cmd.command.toLowerCase().includes(input.toLowerCase()) ||
-        cmd.description.toLowerCase().includes(input.toLowerCase())
+        cmd.description.toLowerCase().includes(input.toLowerCase()) || 
+        cmd.examples.some(ex => ex.toLowerCase().includes(input.toLowerCase()))
       )
     : commandExamples;
   
@@ -130,8 +150,23 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
               className={`command-suggestion ${selectedCommand === index ? 'selected' : ''}`}
               onClick={() => handleCommandClick(example.command)}
             >
-              <div><strong>{example.command}</strong> - {example.description}</div>
-              <div className="command-example">Example: {example.example}</div>
+              <div className="command-header">
+                <strong>{example.command}</strong> - {example.description}
+              </div>
+              <div className="command-examples">
+                {example.examples.map((ex, exIndex) => (
+                  <div 
+                    key={exIndex} 
+                    className="command-example"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExampleClick(ex);
+                    }}
+                  >
+                    {ex}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
           
@@ -143,16 +178,24 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
         
         <div className="command-palette-footer">
-          <button className="command-cancel-button" onClick={onClose}>
-            Cancel
-          </button>
-          <button 
-            className="command-submit-button" 
-            onClick={onSubmit}
-            disabled={!input.startsWith('/')}
-          >
-            Execute
-          </button>
+          <div className="command-keyboard-shortcuts">
+            <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+            <span><kbd>Tab</kbd> Complete</span>
+            <span><kbd>Enter</kbd> Execute</span>
+            <span><kbd>Esc</kbd> Cancel</span>
+          </div>
+          <div className="command-palette-actions">
+            <button className="command-cancel-button" onClick={onClose}>
+              Cancel
+            </button>
+            <button 
+              className="command-submit-button" 
+              onClick={onSubmit}
+              disabled={!input.startsWith('/')}
+            >
+              Execute
+            </button>
+          </div>
         </div>
       </div>
     </div>
