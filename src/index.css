@@ -270,56 +270,6 @@ body {
   gap: 10px;
 }
 
-/* Block editor - UPDATED FOR FIX */
-.block-editor {
-  position: relative;
-  border-radius: 5px;
-  transition: background-color 0.2s;
-  min-height: 40px;
-  padding-left: 40px; /* Add space for the action buttons */
-}
-
-.block-editor:hover {
-  background-color: var(--block-hover-bg);
-}
-
-.block-actions {
-  position: absolute;
-  left: -40px;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 10; /* Ensure buttons stay above other content */
-}
-
-.block-action-button {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
-  background-color: white;
-  color: var(--text-color);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: background-color 0.2s;
-}
-
-.block-action-button:hover {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-/* Dark mode support for block actions */
-[data-theme="dark"] .block-action-button {
-  background-color: var(--sidebar-bg);
-  color: var(--sidebar-text);
-  border-color: var(--border-color);
-}
 
 /* Text block */
 .text-block-editor {
@@ -522,16 +472,29 @@ code {
 }
 
 /* Command palette - UPDATED FOR FIX */
-.command-palette {
+/* Command palette - FIXED VERSION */
+.command-palette-overlay {
   position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 10vh;
+  z-index: 1000;
+}
+
+.command-palette {
   width: 500px;
+  max-width: 90%;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  overflow: hidden;
+  z-index: 1001;
 }
 
 .command-palette-header {
@@ -545,6 +508,8 @@ code {
   border: 1px solid var(--border-color);
   border-radius: 5px;
   font-size: 16px;
+  background-color: white;
+  color: var(--text-color);
 }
 
 .command-palette-suggestions {
@@ -557,10 +522,12 @@ code {
   padding: 10px 15px;
   cursor: pointer;
   transition: background-color 0.2s;
+  border-left: 3px solid transparent;
 }
 
 .command-suggestion:hover, .command-suggestion.selected {
   background-color: var(--block-hover-bg);
+  border-left: 3px solid var(--primary-color);
 }
 
 .command-example {
@@ -580,6 +547,7 @@ code {
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
+  background-color: #f8f9fa;
 }
 
 .command-submit-button {
@@ -615,6 +583,11 @@ code {
 [data-theme="dark"] .command-input {
   background-color: var(--sidebar-bg);
   color: var(--sidebar-text);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .command-palette-footer {
+  background-color: var(--sidebar-bg);
 }
 
 [data-theme="dark"] .command-suggestion:hover, 
@@ -759,28 +732,92 @@ code {
   margin-right: 10px;
 }
 
-/* Responsive adjustments */
+/* Block editor styles - FIXED VERSION with consistent button sizing */
+.block-editor {
+  position: relative;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+  min-height: 40px;
+  padding-left: 45px; /* Make space for buttons */
+  margin-bottom: 10px;
+}
+
+.block-editor:hover,
+.block-editor.hovered {
+  background-color: var(--block-hover-bg);
+}
+
+/* Block Actions container with fixed dimensions */
+.block-actions {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40px; /* Fixed width */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px 0 5px 5px;
+  z-index: 100; /* Ensure buttons stay above other content */
+  height: 100%; /* Take full height of parent */
+  pointer-events: auto; /* Ensure clickable */
+}
+
+/* Fixed size buttons with consistent dimensions */
+.block-action-button {
+  width: 30px; /* Fixed width */
+  height: 30px; /* Fixed height */
+  min-width: 30px; /* Prevent shrinking */
+  min-height: 30px; /* Prevent shrinking */
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: white;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: background-color 0.2s;
+  z-index: 101; /* Ensure clickability */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Add subtle shadow for depth */
+  padding: 0; /* Remove padding that might affect size */
+  margin: 0; /* Remove margin that might affect spacing */
+  flex-shrink: 0; /* Prevent flexbox from shrinking the button */
+  overflow: hidden; /* Prevent content from affecting size */
+}
+
+.block-action-button:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: scale(1.05); /* Subtle scale effect on hover */
+}
+
+/* Dark mode support for block actions */
+[data-theme="dark"] .block-action-button {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  border-color: var(--border-color);
+}
+
+/* Responsive design for mobile */
 @media (max-width: 768px) {
-  .app {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    padding: 10px;
-  }
-  
   .block-editor {
-    padding-left: 0; /* Remove padding on mobile */
+    padding-left: 0; /* Remove side padding on mobile */
   }
   
   .block-actions {
-    position: static;
+    position: relative;
+    left: auto;
+    width: 100%;
     flex-direction: row;
-    justify-content: flex-end;
-    margin-top: 5px;
+    justify-content: flex-start;
+    margin-bottom: 5px;
+    padding: 5px;
+    height: auto; /* Auto height for horizontal layout */
   }
+
+
   
   .command-palette {
     width: 90%;

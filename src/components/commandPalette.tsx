@@ -16,6 +16,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [selectedCommand, setSelectedCommand] = useState<number>(0);
+  const paletteRef = useRef<HTMLDivElement>(null);
   
   // Command examples with detailed information
   const commandExamples = [
@@ -46,7 +47,20 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, []);
+    
+    // Add click outside handler to close palette
+    const handleClickOutside = (event: MouseEvent) => {
+      if (paletteRef.current && !paletteRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
   
   // Handle keyboard navigation and command selection
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -63,15 +77,15 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     } else if (e.key === 'Escape') {
       e.preventDefault();
       onClose();
-    } else if (e.key === 'ArrowDown' && input === '') {
+    } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedCommand((prev) => 
-        (prev + 1) % commandExamples.length
+        (prev + 1) % filteredCommands.length
       );
-    } else if (e.key === 'ArrowUp' && input === '') {
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedCommand((prev) => 
-        (prev - 1 + commandExamples.length) % commandExamples.length
+        (prev - 1 + filteredCommands.length) % filteredCommands.length
       );
     }
   };
@@ -92,49 +106,54 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     : commandExamples;
   
   return (
-    <div className="command-palette">
-      <div className="command-palette-header">
-        <input
-          ref={inputRef}
-          type="text"
-          className="command-input"
-          value={input}
-          onChange={onInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a command (e.g., /insert, /latex, /code)"
-        />
-      </div>
-      
-      <div className="command-palette-suggestions">
-        {filteredCommands.map((example, index) => (
-          <div 
-            key={index} 
-            className={`command-suggestion ${selectedCommand === index ? 'selected' : ''}`}
-            onClick={() => handleCommandClick(example.command)}
-          >
-            <div><strong>{example.command}</strong> - {example.description}</div>
-            <div className="command-example">Example: {example.example}</div>
-          </div>
-        ))}
+    <div className="command-palette-overlay">
+      <div 
+        className="command-palette"
+        ref={paletteRef}
+      >
+        <div className="command-palette-header">
+          <input
+            ref={inputRef}
+            type="text"
+            className="command-input"
+            value={input}
+            onChange={onInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a command (e.g., /insert, /latex, /code)"
+          />
+        </div>
         
-        {filteredCommands.length === 0 && (
-          <div className="command-no-results">
-No matching commands found.
-          </div>
-        )}
-      </div>
-      
-      <div className="command-palette-footer">
-        <button className="command-cancel-button" onClick={onClose}>
-          Cancel
-        </button>
-        <button 
-          className="command-submit-button" 
-          onClick={onSubmit}
-          disabled={!input.startsWith('/')}
-        >
-          Execute
-        </button>
+        <div className="command-palette-suggestions">
+          {filteredCommands.map((example, index) => (
+            <div 
+              key={index} 
+              className={`command-suggestion ${selectedCommand === index ? 'selected' : ''}`}
+              onClick={() => handleCommandClick(example.command)}
+            >
+              <div><strong>{example.command}</strong> - {example.description}</div>
+              <div className="command-example">Example: {example.example}</div>
+            </div>
+          ))}
+          
+          {filteredCommands.length === 0 && (
+            <div className="command-no-results">
+              No matching commands found.
+            </div>
+          )}
+        </div>
+        
+        <div className="command-palette-footer">
+          <button className="command-cancel-button" onClick={onClose}>
+            Cancel
+          </button>
+          <button 
+            className="command-submit-button" 
+            onClick={onSubmit}
+            disabled={!input.startsWith('/')}
+          >
+            Execute
+          </button>
+        </div>
       </div>
     </div>
   );

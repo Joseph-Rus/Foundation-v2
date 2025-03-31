@@ -20,9 +20,9 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
   onDeleteBlock,
   isLastBlock,
 }) => {
+  // Use state to track hover status
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const blockRef = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef<HTMLDivElement>(null);
 
   // Handle keyboard events (Enter and Backspace)
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -39,14 +39,23 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
     }
   };
 
-  // Fix for hover state management
+  // Show action buttons when mouse enters the block
   const handleMouseEnter = () => {
     setIsHovered(true);
   };
 
+  // Keep buttons visible when hovering over them - don't hide immediately
+  const handleButtonsMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  // Handle mouse leaving the entire block and buttons area
   const handleMouseLeave = (e: React.MouseEvent) => {
-    // Check if mouse is moving to the action buttons
-    if (actionsRef.current && !actionsRef.current.contains(e.relatedTarget as Node)) {
+    // Get the related target (element mouse is moving to)
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    
+    // Check if the mouse is leaving to an element outside our block or buttons
+    if (!blockRef.current?.contains(relatedTarget)) {
       setIsHovered(false);
     }
   };
@@ -83,13 +92,11 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {renderBlockEditor()}
-      
+      {/* Action buttons - now part of the main container for proper event bubbling */}
       {isHovered && (
         <div 
           className="block-actions"
-          ref={actionsRef}
-          onMouseEnter={handleMouseEnter} // Keep hover state when mouse is over buttons
+          onMouseEnter={handleButtonsMouseEnter}
         >
           <button 
             className="block-action-button"
@@ -124,6 +131,9 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
           </button>
         </div>
       )}
+
+      {/* Block content */}
+      {renderBlockEditor()}
     </div>
   );
 };
