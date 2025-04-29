@@ -1,7 +1,7 @@
 # Note-Taking Electron App
 
 ## Overview
-This project is a modern note-taking application built with **React**, **TypeScript**, and **Electron**. It allows users to create, edit, save, and delete notes. The app features an interactive timeline view to track note history along with a customizable settings page for personalizing the experience.
+This project is a modern note-taking application built with React, TypeScript, and Electron. It allows users to create, edit, save, and delete notes. The app features an interactive timeline view to track note history, along with a customizable settings page for personalizing the experience. It uses OpenAI to help students take notes and leverages Overleaf to format formulas and render graphs in real time.
 
 ## Table of Contents
 * [Features](#features)
